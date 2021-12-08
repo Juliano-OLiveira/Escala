@@ -1,0 +1,29 @@
+select * from escala
+
+select * from funcionarios
+
+CREATE TABLE funcionarios(
+idFunc serial primary key not null,
+	nome varchar(200)
+
+);
+
+CREATE TABLE escala(
+idEscala serial PRIMARY key not null,
+	data date not null,
+	manha integer,
+	tarde integer,
+	FOREIGN KEY (idEscala) REFERENCES funcionarios (idFunc)
+);
+
+Drop table funcionarios CASCADE
+Drop table escala
+[A[B
+
+CREATE TABLE escala(
+idEscala serial PRIMARY key not null ,
+	data date,
+	manha varchar,
+	tarde varchar
+	
+);
