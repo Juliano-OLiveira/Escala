@@ -3,11 +3,13 @@ package Controller;
 import DateFormat.TextDataChooser;
 import Factory.EscalaDaoFactory;
 import IDao.escalaDao.IEscalaDaoImpl;
+import IDao.funcionarioDao.IFuncionarioDao;
 import Models.Funcionario;
 import ReseultTableModel.DisplayQueryResults;
 import Views.Escala;
 import static Views.Escala.jtComboFeriado;
 import static Views.Escala.listarFunc;
+
 import java.awt.Color;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -20,10 +22,12 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import javax.swing.JOptionPane;
 
 public class EscalaCotroller {
 
@@ -36,8 +40,10 @@ public class EscalaCotroller {
     public static Date dat = new Date();
     private static final List<String> tarde = new ArrayList<>();
     public static FocusListener placeHolder;
-    private static IEscalaDaoImpl dao;
+    private static IFuncionarioDao dao;
     private static EscalaDaoFactory factory;
+    private static int dia;
+    private static List<String> aux2;
 
     public EscalaCotroller() {
 
@@ -129,21 +135,32 @@ public class EscalaCotroller {
     public static void preencherCombo() {
 
         for (Funcionario func : read()) {
-            listarFunc.addItem(func.getNome());
 
+            listarFunc.addItem(func.getNome());
+            manha.add(func.getNome());
+           
         }
+
     }
 
     public static void inserindoDatas() throws ParseException {
 
         String sData[] = txtData.getText().split("/");
         String sDataFinal[] = txtFinal.getText().split("/");
+
+        if (txtData.getText().equals("__/__/____")) {
+            JOptionPane.showMessageDialog(null, "Insira uma Data de Inicio", "Aviso", JOptionPane.WARNING_MESSAGE);
+        } else if (txtFinal.getText().equals("__/__/____")) {
+            JOptionPane.showMessageDialog(null, "Insira uma Data Final", "Aviso", JOptionPane.WARNING_MESSAGE);
+
+        }
+
         List<Integer> feriados = new ArrayList();
 
         int ano = Integer.parseInt(sData[2]);
         //Subtrai 1 porque os meses iniciam com 0-janeiro e 11-Dezembro
         int mes = Integer.parseInt(sData[1]) - 1;
-        int dia = Integer.parseInt(sData[0]) - 1;
+        dia = Integer.parseInt(sData[0]) - 1;
         int diaFinal = Integer.parseInt(sDataFinal[0]);
         subt = diaFinal - dia;
 
@@ -163,6 +180,7 @@ public class EscalaCotroller {
 
             System.out.println("----" + feriados.toString());
         }
+        int contador;
 
         for (int i = 0; i < subt; i++) {
             cal.add(Calendar.DATE, 1);
@@ -183,7 +201,11 @@ public class EscalaCotroller {
 
             } else {
 
-                enviarDados();
+                try {
+                    enviarDados();
+                } catch (SQLException ex) {
+                    Logger.getLogger(EscalaCotroller.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
 
         }
@@ -231,100 +253,65 @@ public class EscalaCotroller {
 
     }
 
-    private static void enviarDados() {
-
-        SimpleDateFormat ftm = new SimpleDateFormat("dd/MM/yyyy");
+    private static void enviarDados() throws SQLException {
 
         dat = cal.getTime();
-        //  System.out.println("" + ftm.format(dat));
 
         try {
-            int k = 0;
-            int l = 0;
 
-            for (Funcionario func : read()) {
-                manha.add(func.getNome());
-
-            }
-
+//            for (Funcionario func : read()) {
+//                manha.add(func.getNome());
+//               
+//
+//            }
             for (Funcionario func2 : read()) {
                 tarde.add(func2.getNome());
 
             }
-
+           
             Collections.shuffle(manha);
+            Collections.shuffle(tarde);
             aux = manha.stream().distinct().collect(Collectors.toList());
+            aux2 = tarde.stream().distinct().collect(Collectors.toList());
             for (int i = 0; i < aux.size(); i++) {
-                String string = aux.get(i);
+
                 System.out.println("Lista:" + aux);
 
+                String sql = "insert into escala (idEscala,data,manha,tarde) values (default,?,?,?)";
+
+                pst = ConexaoBD.Conexao.getC().prepareStatement(sql);
+                pst.setDate(1, new java.sql.Date(dat.getTime()));
+                pst.setString(2, aux.get(i));
+                pst.setString(3, aux2.get(i));
+
+                pst.execute();
+                pst.close();
+
             }
-//            verifica("mariza");
-//            verifica("Maria Cristia");
-//            verifica("diane");
-//            verifica("clotilde");
-//            verifica("vagner");
-//            verifica("paula");
-//            verifica("rosangela");
-//            verifica("ademir");
-//            verifica("cristina");
-//            verifica("juliano");
-//            verifica("cirlene");
-             verifica();
-
-//               
-//                System.out.println("interator " + i);
-//                String encontrar = manha.get(i);
-        } catch (Exception ex) {
-            Logger.getLogger(Escala.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-    }
-
-    public static String verifica() throws SQLException {
-        ConexaoBD.Conexao.iniciarConexao();
-        String encontrar="mariza";
-       
-        String sql = "insert into escala (idEscala,data,manha,tarde) values (default,?,?,?)";
-
-        int contador = 0;
-        for (String string : aux) {
-            if (string.equalsIgnoreCase(encontrar)) {
-                contador++;
-            }
-        }
-        if (contador >= 2) {
-            verificaData();
-            aux.remove(0);
-            System.out.println("removendo");
-
-        }
-        if (contador == 1) {
-            pst = ConexaoBD.Conexao.getC().prepareStatement(sql);
-            pst.setDate(1, new java.sql.Date(dat.getTime()));
-            pst.setString(2, aux.get(0));
-            pst.setString(3, tarde.get(0));
-            pst.execute();
-            pst.close();
-
-
-        }
-           // dao.inserirEscala(dat,aux,tarde);
-        verificaData();
-
-        System.out.println("Nomes: " + encontrar + " Quantidade: " + contador);
-        return encontrar;
-
-    }
-
-    public static boolean verificaData() throws SQLException {
-        PreparedStatement pstEx = ConexaoBD.Conexao.getC().prepareStatement("select data from escala where data=data");
-        ResultSet rs = pstEx.executeQuery();
-        if (rs.next()) {
             DisplayQueryResults.atualizarTableModel();
-            return true;
+
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+
         }
-        return false;
+
+    }
+
+    public static void removeCombo() {
+
+        int index = listarFunc.getSelectedIndex();
+        Object ob = listarFunc.getSelectedItem();
+        if (ob.equals("") || index < 0) {
+
+            JOptionPane.showMessageDialog(null,
+                    "Você deve selecionar um item na Caixa de Seleção", "Aviso", JOptionPane.WARNING_MESSAGE);
+
+        } else {
+
+            Escala.listarFunc.removeItemAt(index);
+            EscalaCotroller.manha.remove(index);
+
+        }
 
     }
 

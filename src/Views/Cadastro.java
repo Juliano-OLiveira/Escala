@@ -38,7 +38,6 @@ public class Cadastro extends JPanel {
     }
 
     public Cadastro() {
-       
 
         setLayout(new GridLayout(5, 2));
         JPanel west = new JPanel();
@@ -112,10 +111,9 @@ public class Cadastro extends JPanel {
                 JOptionPane.showMessageDialog(Cadastro.this, "Digite o Nome do Funcionário", "Aviso", JOptionPane.ERROR_MESSAGE);
 
             } else if (e.getSource() == salvar) {
-           
+
                 ContollerFuncionarios.addPessoa_altPessoa();
-                Escala.listarFunc.removeAllItems();
-                EscalaCotroller.preencherCombo();
+                atualizarComboFuncionarios();
                 limparCampos();
                 TelaPrincipal.selectAba(1);
 
@@ -123,6 +121,12 @@ public class Cadastro extends JPanel {
                 limparCampos();
             }
         }
+
+    }
+
+    public static void atualizarComboFuncionarios() {
+        Escala.listarFunc.removeAllItems();
+        EscalaCotroller.preencherCombo();
 
     }
 }

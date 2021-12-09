@@ -71,6 +71,7 @@ public class ContollerFuncionarios {
 
             }
             dao.listar();
+           Cadastro.atualizarComboFuncionarios();
 
         } catch (Exception e) {
             System.out.println(e.getMessage());

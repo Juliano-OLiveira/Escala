@@ -117,7 +117,7 @@ public class FuncionarioDaoImpl implements IFuncionarioDao {
     }
 
     @Override
-    public Funcionario buscarPorId(Long id) {
+    public Funcionario buscarPorId(Integer id) {
         ResultSet rs = null;
         Funcionario funcionario = null;
         try {

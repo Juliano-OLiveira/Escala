@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface IFuncionarioDao extends IDao {
 
-    public Funcionario buscarPorId(Long id);
+    public Funcionario buscarPorId(Integer id);
 
     public List buscarPorNome(String nome);
 }

@@ -2,6 +2,9 @@ package Views;
 
 import Controller.EscalaCotroller;
 import DateFormat.TextDataChooser;
+import Factory.EscalaDaoFactory;
+import IDao.escalaDao.IEscalaDaoImpl;
+import IDao.funcionarioDao.IFuncionarioDao;
 import Models.Funcionario;
 import ReseultTableModel.DisplayQueryResults;
 import groovy.xml.Entity;
@@ -40,6 +43,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -51,23 +55,25 @@ public class Escala extends JPanel {
     public static JComboBox listarFunc, jtComboFeriado;
     private String[] FE = {"Não", "Sim"};
     public static JTextField dataIn, dataFin, feridaoField;
-    private JButton adiconar;
+    private JButton adiconar, remover;
     private Funcionario func;
     private static JPanel esquerdo;
+    private static IEscalaDaoImpl dao;
+    private static EscalaDaoFactory factory;
 
     public Escala() {
         setLayout(new BorderLayout());
-        // setBackground(Color.red);
+
         btHandler handler = new btHandler();
 
         esquerdo = new JPanel(new GridLayout(1, 2));
         funciJLabel = new JLabel("Funcionários: ");
         funciJLabel.setHorizontalAlignment(JLabel.RIGHT);
-
-//        periodoLabel = new JLabel("Período: ");
-//         periodoLabel.setHorizontalAlignment(JLabel.RIGHT);
-        listarFunc = new JComboBox();
+        String Cmbovazio[] = {""};
+        listarFunc = new JComboBox(Cmbovazio);
         EscalaCotroller.preencherCombo();
+        remover = new JButton("Remover");
+        remover.setBorderPainted(true);
 
         adiconar = new JButton();
         adiconar.setIcon(new ImageIcon(getClass().getResource("/icones/add.png")));
@@ -81,8 +87,7 @@ public class Escala extends JPanel {
 
         esquerdo.add(funciJLabel);
         esquerdo.add(listarFunc);
-        // esquerdo.add(periodoLabel);
-        //esquerdo.add(perido);
+        esquerdo.add(remover);
 
         add(esquerdo, BorderLayout.NORTH);
 
@@ -106,9 +111,9 @@ public class Escala extends JPanel {
         feridaoField.setHorizontalAlignment(JLabel.RIGHT);
 
         esquerdo.add(dataInicial);
-        esquerdo.add(  EscalaCotroller.txtData);
+        esquerdo.add(EscalaCotroller.txtData);
         esquerdo.add(dataFinal);
-        esquerdo.add(  EscalaCotroller.txtFinal);
+        esquerdo.add(EscalaCotroller.txtFinal);
         esquerdo.add(labelFeriado);
         esquerdo.add(jtComboFeriado);
         esquerdo.add(feridaoField);
@@ -125,13 +130,13 @@ public class Escala extends JPanel {
 
         resultTableModel = new JPanel();
 
-        add(  EscalaCotroller.instanciarTableEscala1());
+        add(EscalaCotroller.instanciarTableEscala1());
 
         jtComboFeriado.setSelectedIndex(0);
 
         adiconar.addActionListener(handler);
+        remover.addActionListener(handler);
 
-       
         feridaoField.addFocusListener(EscalaCotroller.placeHolder);
 
     }
@@ -155,11 +160,13 @@ public class Escala extends JPanel {
                     feridaoField.setEditable(true);
 
                 } else {
-                    //  jtComboFeriado.setSelectedIndex(0);
+
                     feridaoField.setEditable(false);
 
-                    // esquerdo.remove(feridaoField);
                 }
+
+            } else if (e.getSource() == remover) {
+                EscalaCotroller.removeCombo();
 
             }
 

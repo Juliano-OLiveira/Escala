@@ -1,23 +1,15 @@
 package Views;
 
-import ConexaoBD.Conexao;
 import Controller.ContollerFuncionarios;
 import Factory.FuncionarioDaoFactory;
 import IDao.funcionarioDao.IFuncionarioDao;
-import Models.Funcionario;
 import ViewPrincipal.TelaPrincipal;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.List;
 import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -29,7 +21,7 @@ public class Funcionarios extends JPanel {
     public static DefaultTableModel dados;
     public static JTable tabela;
     protected static JButton btIncluir, btExcluir, btAlterar, btFechar;
-    public static JDialog dia = new JDialog();
+     
     private static Connection con = null;
     private FuncionarioDaoFactory factory;
     private IFuncionarioDao dao;

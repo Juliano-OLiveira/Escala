@@ -42,7 +42,21 @@ public class IEscalaDaoImpl implements IDao {
 
     @Override
     public void excluir(Object object) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+       Funcionario funci = (Funcionario) object;
+        String sql = " DELETE FROM funcionarios WHERE idfunc = ?";
+
+        try {
+            PreparedStatement pst = conn.prepareStatement(sql);
+            pst.setInt(1, funci.getId());
+            int affectedRows = pst.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new SQLException("Updating Funionarios failed, no rows affected.");
+            }
+
+        } catch (SQLException ex) {
+            Logger.getLogger(FuncionarioDaoImpl.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     @Override
@@ -73,7 +87,7 @@ public class IEscalaDaoImpl implements IDao {
         } catch (SQLException ex) {
             System.out.println(ex.getMessage());
         }
-        return inserirEscala(a, b, c);
+        return null;
     }
 
 }
