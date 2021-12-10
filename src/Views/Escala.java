@@ -4,46 +4,24 @@ import Controller.EscalaCotroller;
 import DateFormat.TextDataChooser;
 import Factory.EscalaDaoFactory;
 import IDao.escalaDao.IEscalaDaoImpl;
-import IDao.funcionarioDao.IFuncionarioDao;
 import Models.Funcionario;
-import ReseultTableModel.DisplayQueryResults;
-import groovy.xml.Entity;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.text.DateFormat;
+import java.io.InputStream;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import static java.util.Collections.list;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
+import javax.imageio.ImageIO;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -76,7 +54,7 @@ public class Escala extends JPanel {
         remover.setBorderPainted(true);
 
         adiconar = new JButton();
-        adiconar.setIcon(new ImageIcon(getClass().getResource("/icones/add.png")));
+       loadIcon();
         adiconar.setPreferredSize(new Dimension(40, 40));
         adiconar.setBackground(null);
         adiconar.setOpaque(false);
@@ -139,6 +117,18 @@ public class Escala extends JPanel {
 
         feridaoField.addFocusListener(EscalaCotroller.placeHolder);
 
+    }
+      private void loadIcon(){
+        InputStream icon = getClass().getResourceAsStream("/icones/add.png");
+          Image image;
+          image = null;
+          try {
+              image = ImageIO.read(icon);
+          } catch (Exception e) {
+              System.out.println("Error: "+ e);
+          }
+          this.adiconar.setIcon(new ImageIcon(image));
+    
     }
 
     public class btHandler implements ActionListener {

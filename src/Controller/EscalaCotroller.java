@@ -2,7 +2,6 @@ package Controller;
 
 import DateFormat.TextDataChooser;
 import Factory.EscalaDaoFactory;
-import IDao.escalaDao.IEscalaDaoImpl;
 import IDao.funcionarioDao.IFuncionarioDao;
 import Models.Funcionario;
 import ReseultTableModel.DisplayQueryResults;
@@ -18,15 +17,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 
 public class EscalaCotroller {
@@ -42,8 +41,9 @@ public class EscalaCotroller {
     public static FocusListener placeHolder;
     private static IFuncionarioDao dao;
     private static EscalaDaoFactory factory;
-    private static int dia;
+    private static int dia, diaFinal;
     private static List<String> aux2;
+    private static  Queue queue = new ArrayDeque();
 
     public EscalaCotroller() {
 
@@ -137,8 +137,8 @@ public class EscalaCotroller {
         for (Funcionario func : read()) {
 
             listarFunc.addItem(func.getNome());
-            manha.add(func.getNome());
-           
+            queue.add(func.getNome());
+
         }
 
     }
@@ -161,7 +161,7 @@ public class EscalaCotroller {
         //Subtrai 1 porque os meses iniciam com 0-janeiro e 11-Dezembro
         int mes = Integer.parseInt(sData[1]) - 1;
         dia = Integer.parseInt(sData[0]) - 1;
-        int diaFinal = Integer.parseInt(sDataFinal[0]);
+        diaFinal = Integer.parseInt(sDataFinal[0]);
         subt = diaFinal - dia;
 
         cal = Calendar.getInstance();
@@ -202,7 +202,13 @@ public class EscalaCotroller {
             } else {
 
                 try {
-                    enviarDados();
+                   
+//            }
+                    for (Funcionario func2 : read()) {
+                        queue.add(func2.getNome());
+                    }
+
+                    enviarDados(cal.getTime(),queue);
                 } catch (SQLException ex) {
                     Logger.getLogger(EscalaCotroller.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -253,9 +259,7 @@ public class EscalaCotroller {
 
     }
 
-    private static void enviarDados() throws SQLException {
-
-        dat = cal.getTime();
+    private static void enviarDados(Date dat, Queue queue) throws SQLException {
 
         try {
 
@@ -263,31 +267,24 @@ public class EscalaCotroller {
 //                manha.add(func.getNome());
 //               
 //
-//            }
-            for (Funcionario func2 : read()) {
-                tarde.add(func2.getNome());
+            String sql = "insert into escala (idEscala,data,manha,tarde) values (default,?,?,?)";
+            System.out.println("Array: " + queue.toString());
 
-            }
-           
-            Collections.shuffle(manha);
-            Collections.shuffle(tarde);
-            aux = manha.stream().distinct().collect(Collectors.toList());
-            aux2 = tarde.stream().distinct().collect(Collectors.toList());
-            for (int i = 0; i < aux.size(); i++) {
+            String manha = (String) queue.remove();
+             
+            String tarde = (String) queue.remove();
+            queue.add(manha);
+            queue.add(tarde);
+            
+            queue.remove();
+            pst = ConexaoBD.Conexao.getC().prepareStatement(sql);
+            pst.setDate(1, new java.sql.Date(dat.getTime()));
 
-                System.out.println("Lista:" + aux);
+            pst.setString(2, manha);
+            pst.setString(3, tarde);
+            pst.execute();
+            pst.close();
 
-                String sql = "insert into escala (idEscala,data,manha,tarde) values (default,?,?,?)";
-
-                pst = ConexaoBD.Conexao.getC().prepareStatement(sql);
-                pst.setDate(1, new java.sql.Date(dat.getTime()));
-                pst.setString(2, aux.get(i));
-                pst.setString(3, aux2.get(i));
-
-                pst.execute();
-                pst.close();
-
-            }
             DisplayQueryResults.atualizarTableModel();
 
         } catch (Exception ex) {
@@ -301,7 +298,7 @@ public class EscalaCotroller {
 
         int index = listarFunc.getSelectedIndex();
         Object ob = listarFunc.getSelectedItem();
-        if (ob.equals("") || index < 0) {
+        if (ob.equals("")) {
 
             JOptionPane.showMessageDialog(null,
                     "Você deve selecionar um item na Caixa de Seleção", "Aviso", JOptionPane.WARNING_MESSAGE);
