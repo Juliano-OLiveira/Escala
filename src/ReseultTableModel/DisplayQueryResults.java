@@ -10,12 +10,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.logging.Level;
@@ -230,7 +227,7 @@ public class DisplayQueryResults extends JInternalFrame {
 
           
 
-            InputStream src = this.getClass().getClassLoader().getResourceAsStream("relatorios/Cherry.jasper");
+            InputStream src = this.getClass().getClassLoader().getResourceAsStream("relatorios/Escala.jasper");
             JasperPrint jasperPrint = JasperFillManager.fillReport(src, null, ConexaoBD.Conexao.getC());
 
             JasperViewer view = new JasperViewer(jasperPrint, false);
