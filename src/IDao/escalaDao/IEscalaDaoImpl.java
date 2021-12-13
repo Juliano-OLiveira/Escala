@@ -42,17 +42,14 @@ public class IEscalaDaoImpl implements IDao {
 
     @Override
     public void excluir(Object object) {
+           
        Funcionario funci = (Funcionario) object;
-        String sql = " DELETE FROM funcionarios WHERE idfunc = ?";
+        String sql = " DELETE FROM funcionarios WHERE nome = ?";
 
         try {
-            PreparedStatement pst = conn.prepareStatement(sql);
-            pst.setInt(1, funci.getId());
-            int affectedRows = pst.executeUpdate();
-
-            if (affectedRows == 0) {
-                throw new SQLException("Updating Funionarios failed, no rows affected.");
-            }
+            PreparedStatement pst = ConexaoBD.Conexao.getC().prepareStatement(sql);
+            pst.setString(1, funci.getNome());
+           pst.execute();
 
         } catch (SQLException ex) {
             Logger.getLogger(FuncionarioDaoImpl.class.getName()).log(Level.SEVERE, null, ex);

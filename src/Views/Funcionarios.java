@@ -24,7 +24,7 @@ public class Funcionarios extends JPanel {
      
     private static Connection con = null;
     private FuncionarioDaoFactory factory;
-    private IFuncionarioDao dao;
+    public static IFuncionarioDao dao;
     
     public Funcionarios() {
         setLayout(new FlowLayout());

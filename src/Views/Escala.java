@@ -5,6 +5,7 @@ import DateFormat.TextDataChooser;
 import Factory.EscalaDaoFactory;
 import IDao.escalaDao.IEscalaDaoImpl;
 import Models.Funcionario;
+import static Views.Cadastro.atualizarComboFuncionarios;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -13,11 +14,11 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.InputStream;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -47,14 +48,15 @@ public class Escala extends JPanel {
         esquerdo = new JPanel(new GridLayout(1, 2));
         funciJLabel = new JLabel("Funcionários: ");
         funciJLabel.setHorizontalAlignment(JLabel.RIGHT);
-        String Cmbovazio[] = {""};
-        listarFunc = new JComboBox(Cmbovazio);
+        String vaz[] = {""};
+        listarFunc = new JComboBox(vaz);
+
         EscalaCotroller.preencherCombo();
         remover = new JButton("Remover");
         remover.setBorderPainted(true);
 
         adiconar = new JButton();
-       loadIcon();
+        loadIcon();
         adiconar.setPreferredSize(new Dimension(40, 40));
         adiconar.setBackground(null);
         adiconar.setOpaque(false);
@@ -118,17 +120,19 @@ public class Escala extends JPanel {
         feridaoField.addFocusListener(EscalaCotroller.placeHolder);
 
     }
-      private void loadIcon(){
+
+    private void loadIcon() {
         InputStream icon = getClass().getResourceAsStream("/icones/add.png");
-          Image image;
-          image = null;
-          try {
-              image = ImageIO.read(icon);
-          } catch (Exception e) {
-              System.out.println("Error: "+ e);
-          }
-          this.adiconar.setIcon(new ImageIcon(image));
-    
+
+        try {
+
+            Image image = ImageIO.read(icon);
+
+            this.adiconar.setIcon(new ImageIcon(image));
+        } catch (Exception e) {
+            System.out.println("Error: " + e);
+        }
+
     }
 
     public class btHandler implements ActionListener {
@@ -156,7 +160,13 @@ public class Escala extends JPanel {
                 }
 
             } else if (e.getSource() == remover) {
-                EscalaCotroller.removeCombo();
+                try {
+                    EscalaCotroller.removeCombo();
+                    atualizarComboFuncionarios();
+                    Funcionarios.dao.listar();
+                } catch (SQLException ex) {
+                    Logger.getLogger(Escala.class.getName()).log(Level.SEVERE, null, ex);
+                }
 
             }
 

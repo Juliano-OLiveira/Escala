@@ -22,7 +22,7 @@ public class DemoEscala {
 
             TelaPrincipal tela = new TelaPrincipal();
            
-            tela.setDefaultCloseOperation(new JFrame(). DISPOSE_ON_CLOSE);
+            tela.setDefaultCloseOperation(new JFrame().EXIT_ON_CLOSE);
 
             tela.setVisible(true);
             tela.setSize(800, 500);

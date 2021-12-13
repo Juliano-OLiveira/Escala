@@ -1,7 +1,9 @@
+
 package Controller;
 
 import DateFormat.TextDataChooser;
 import Factory.EscalaDaoFactory;
+import IDao.funcionarioDao.IFuncionarioDao;
 import Models.Funcionario;
 import ReseultTableModel.DisplayQueryResults;
 import Views.Escala;
@@ -9,7 +11,6 @@ import static Views.Escala.jtComboFeriado;
 import static Views.Escala.listarFunc;
 
 import java.awt.Color;
-import java.awt.HeadlessException;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.sql.PreparedStatement;
@@ -24,6 +25,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Queue;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
@@ -39,11 +41,11 @@ public class EscalaCotroller {
     public static Date dat = new Date();
     private static final List<String> tarde = new ArrayList<>();
     public static FocusListener placeHolder;
-    private static IDao.IDao dao;
+    private static IFuncionarioDao dao;
     private static EscalaDaoFactory factory;
     private static int dia, diaFinal;
     private static List<String> aux2;
-    public static Queue queue = new ArrayDeque();
+    private static  Queue queue = new ArrayDeque();
 
     public EscalaCotroller() {
 
@@ -92,7 +94,7 @@ public class EscalaCotroller {
 
             while (rs.next()) {
                 Funcionario func = new Funcionario();
-                //func.setId(rs.getInt("idFunc"));
+                func.setId(rs.getInt("idFunc"));
                 func.setNome(rs.getString("nome"));
 
                 lis.add(func);
@@ -137,47 +139,86 @@ public class EscalaCotroller {
         for (Funcionario func : read()) {
 
             listarFunc.addItem(func.getNome());
+            queue.add(func.getNome());
 
         }
 
     }
+    
+    public static void testeAlisson() throws ParseException {
+        // Inserindo escala
+        String sData[] = txtData.getText().split("/");
+        String sDataFinal[] = txtFinal.getText().split("/");
+        
+        int ano = Integer.parseInt(sData[2]);
+        //Subtrai 1 porque os meses iniciam com 0-janeiro e 11-Dezembro
+        int mes = Integer.parseInt(sData[1]) - 1;
+        dia = Integer.parseInt(sData[0]) - 1;
+        diaFinal = Integer.parseInt(sDataFinal[0]);
+        subt = diaFinal - dia;
 
-    public static void removeCombo() throws SQLException {
+        cal = Calendar.getInstance();
+        cal.set(ano, mes, dia);
+        
+            // Período matutino
+            for (int i = 0; i < subt; i++) {
+                // Buscando funcionários
+                List<Funcionario> funcionarios = read();
 
-        int index = listarFunc.getSelectedIndex();
-        Object ob = listarFunc.getSelectedItem();
-        String sql = " DELETE FROM funcionarios WHERE nome = ?";
-        Funcionario funci = new Funcionario();
-        funci.setNome((String) ob);
+                // Embaralhando a listagem
+                Collections.shuffle(funcionarios);
+        
+                cal.add(Calendar.DATE, 1);
 
-        try {
-            
-             Object[] options = {"Sim", "Não"};
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 
-            int respost = JOptionPane.showOptionDialog(null, "Deseja realmente Excluir o Funcionario?", "Informação", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[1]);
-            if (respost == JOptionPane.NO_OPTION) {
-                // System.out.println("Não");
-            }else{
+                Random random = new Random();
+                int intervalo_randomico = random.nextInt(funcionarios.size());
 
-            Escala.listarFunc.removeItemAt(index);
-            EscalaCotroller.queue.remove(ob);
-                PreparedStatement pst = ConexaoBD.Conexao.getC().prepareStatement(sql);
-                pst.setString(1, funci.getNome());
+                try{
+                    Funcionario func = funcionarios.get(intervalo_randomico);
+                    
+                    // Verificando se já está escalado nos últimos 5 dias
+                    String searchSql = "SELECT * FROM escala WHERE funcionario = ? AND data between ?-5 AND ?";
+                    java.util.Date finalUtil = cal.getTime();
+                    java.sql.Date finalSql = new java.sql.Date(finalUtil.getTime());
+                    pst = ConexaoBD.Conexao.getC().prepareStatement(searchSql);
+                    pst.setInt(1, func.id);
+                    pst.setDate(2, finalSql);
+                    pst.setDate(3, finalSql);
 
-                JOptionPane.showMessageDialog(null,
-                        "Funcionário "+funci.getNome()+ " removido com Sucesso", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
-                pst.execute();
-               
-                pst.close();
-               
-            }
+                    ResultSet rs = pst.executeQuery();
+                    
+                    //contador de registros encontrados:
+                    int Contador = 0;
+                    while(rs.next()){										                                   //mesmo usando um select *, nesse ponto defino que quero usar	
+                        Contador ++;
+                    }
+                    
+                    if(Contador == 0){
+                        pst.close();
+                    
+                        String insertSql = "insert into escala (idEscala, data, turno, funcionario) values (default,?,?,?)";
+                        pst = ConexaoBD.Conexao.getC().prepareStatement(insertSql);
 
-        } catch (HeadlessException ex) {
-            System.out.println("Erro: " + ex);
-        }
+                        java.util.Date dataUtil = cal.getTime();
+                        java.sql.Date dataSql = new java.sql.Date(dataUtil.getTime());
 
+                        pst.setDate(1, dataSql);
+                        pst.setString(2, "matutino");
+                        pst.setInt(3, func.id);
+                        pst.execute();
+                        pst.close();
+                    }
+                    
+                    DisplayQueryResults.atualizarTableModel();
+                } catch (Exception ex) {
+                    System.out.println(ex.getMessage());
+                }
+            } // Percorrendo os dias
+        // JOptionPane.showMessageDialog(null, "O teste funcionou!", "Aviso", JOptionPane.WARNING_MESSAGE);
     }
-
+    
     public static void inserindoDatas() throws ParseException {
 
         String sData[] = txtData.getText().split("/");
@@ -237,12 +278,13 @@ public class EscalaCotroller {
             } else {
 
                 try {
-
+                   
+//            }
                     for (Funcionario func2 : read()) {
                         queue.add(func2.getNome());
                     }
 
-                    enviarDados(cal.getTime(), queue);
+                    enviarDados(cal.getTime(),queue);
                 } catch (SQLException ex) {
                     Logger.getLogger(EscalaCotroller.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -305,11 +347,11 @@ public class EscalaCotroller {
             System.out.println("Array: " + queue.toString());
 
             String manha = (String) queue.remove();
-
+             
             String tarde = (String) queue.remove();
             queue.add(manha);
             queue.add(tarde);
-
+            
             queue.remove();
             pst = ConexaoBD.Conexao.getC().prepareStatement(sql);
             pst.setDate(1, new java.sql.Date(dat.getTime()));
@@ -328,4 +370,23 @@ public class EscalaCotroller {
 
     }
 
+    public static void removeCombo() {
+
+        int index = listarFunc.getSelectedIndex();
+        Object ob = listarFunc.getSelectedItem();
+        if (ob.equals("")) {
+
+            JOptionPane.showMessageDialog(null,
+                    "Você deve selecionar um item na Caixa de Seleção", "Aviso", JOptionPane.WARNING_MESSAGE);
+
+        } else {
+
+            Escala.listarFunc.removeItemAt(index);
+            EscalaCotroller.manha.remove(index);
+
+        }
+
+    }
+
 }
+
