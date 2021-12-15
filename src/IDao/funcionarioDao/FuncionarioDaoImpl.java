@@ -171,8 +171,12 @@ public class FuncionarioDaoImpl implements IFuncionarioDao {
     }
 
     @Override
-    public Object inserirEscala(Date a, List b, List c) {
+    public Object inserirEscala(Date a, String b,String c) {
        return null;
+    }
+
+    @Override
+    public void deletarEscala() {
     }
 
    

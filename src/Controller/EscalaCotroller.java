@@ -2,13 +2,21 @@ package Controller;
 
 import DateFormat.TextDataChooser;
 import Factory.EscalaDaoFactory;
+import Factory.FuncionarioDaoFactory;
+import IDao.escalaDao.EscalaDaoImpl;
+import IDao.funcionarioDao.IFuncionarioDao;
 import Models.Funcionario;
-import ReseultTableModel.DisplayQueryResults;
+import Views.Cadastro;
+import Views.DisplayQueryResults;
+import static Views.DisplayQueryResults.resultTable;
+import static Views.DisplayQueryResults.salvar;
+import static Views.DisplayQueryResults.tableModel;
 import Views.Escala;
 import static Views.Escala.jtComboFeriado;
 import static Views.Escala.listarFunc;
-
 import java.awt.Color;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.HeadlessException;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -17,16 +25,20 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 public class EscalaCotroller {
 
@@ -34,36 +46,41 @@ public class EscalaCotroller {
     private static int subt;
     private static Calendar cal;
     public static TextDataChooser txtData, txtFinal;
-    public static List<String> manha = new ArrayList<>();
-    private static List<String> aux = new ArrayList<>();
+
     public static Date dat = new Date();
-    private static final List<String> tarde = new ArrayList<>();
+    private static EscalaDaoImpl daoEscala;
     public static FocusListener placeHolder;
-    private static IDao.IDao dao;
+
     private static EscalaDaoFactory factory;
     private static int dia, diaFinal;
-    private static List<String> aux2;
-    public static Queue queue = new ArrayDeque();
+    private static JDialog frame;
+    private static JTextField fieldManha = new JTextField(15);
+    private static JTextField fieldTarde = new JTextField(15);
+    private static JTextField fieldCodigo;
+    public static Queue queue = new LinkedList();
+    public static int re;
+    
+    private static FuncionarioDaoFactory factoryFunc;
+    private static EscalaDaoFactory factory2;
+    private static IFuncionarioDao daoFuncionario;
 
-    public EscalaCotroller() {
-
+    public static void ConexaoFactory() {
+        factoryFunc = new Factory.FuncionarioDaoFactory();
+        daoFuncionario = (IFuncionarioDao) factoryFunc.createObject();
+        
+        factory2 = new Factory.EscalaDaoFactory();
+        daoEscala = (EscalaDaoImpl) factory2.createObject();
+        
+        factory = new Factory.EscalaDaoFactory();
+        daoEscala = (EscalaDaoImpl) factory.createObject();
+           
     }
 
     public static Escala getFunc() {
         return Escala.escala;
     }
 
-    private static void insertDomingo() {
-        try {
-            ConexaoBD.Conexao.iniciarConexao();
-            PreparedStatement pst = ConexaoBD.Conexao.getC().prepareStatement("insert into escala (data,manha,tarde) values (default,' ',' ')");
-            pst.executeQuery();
-            pst.close();
-            ConexaoBD.Conexao.disconect();
-        } catch (Exception e) {
-            //System.out.println(e.getMessage());
-        }
-    }
+  
 
     public static void insertSabado() throws ParseException {
 
@@ -125,7 +142,7 @@ public class EscalaCotroller {
 
             }
 
-        } catch (Exception e) {
+        } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
         return lis;
@@ -134,11 +151,9 @@ public class EscalaCotroller {
 
     public static void preencherCombo() {
 
-        for (Funcionario func : read()) {
-
+        read().stream().forEach((func) -> {
             listarFunc.addItem(func.getNome());
-
-        }
+        });
 
     }
 
@@ -151,25 +166,23 @@ public class EscalaCotroller {
         funci.setNome((String) ob);
 
         try {
-            
-             Object[] options = {"Sim", "Não"};
+
+            Object[] options = {"Sim", "Não"};
 
             int respost = JOptionPane.showOptionDialog(null, "Deseja realmente Excluir o Funcionario?", "Informação", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[1]);
             if (respost == JOptionPane.NO_OPTION) {
                 // System.out.println("Não");
-            }else{
+            } else {
 
-            Escala.listarFunc.removeItemAt(index);
-            EscalaCotroller.queue.remove(ob);
                 PreparedStatement pst = ConexaoBD.Conexao.getC().prepareStatement(sql);
                 pst.setString(1, funci.getNome());
 
                 JOptionPane.showMessageDialog(null,
-                        "Funcionário "+funci.getNome()+ " removido com Sucesso", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                        "Funcionário " + funci.getNome() + " removido com Sucesso", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
                 pst.execute();
-               
+
                 pst.close();
-               
+
             }
 
         } catch (HeadlessException ex) {
@@ -215,22 +228,23 @@ public class EscalaCotroller {
 
             System.out.println("----" + feriados.toString());
         }
-        int contador;
 
         for (int i = 0; i < subt; i++) {
             cal.add(Calendar.DATE, 1);
 
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 
-            if (cal.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
+            if (cal.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY  ) {
                 // System.out.println("Domingo");
                 insertDomingo();
 
-            } else if (cal.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY) {
+            } 
+            else if (cal.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY) {
                 // System.out.println("Sabado");
                 insertSabado();
 
-            } else if (cal.get(Calendar.DATE) == t0 || feriados.contains(cal.get(Calendar.DATE))) {
+            } 
+            else if (cal.get(Calendar.DATE) == t0 || feriados.contains(cal.get(Calendar.DATE))) {
 
                 System.out.println("Feriados: " + t0);
 
@@ -240,6 +254,7 @@ public class EscalaCotroller {
 
                     for (Funcionario func2 : read()) {
                         queue.add(func2.getNome());
+
                     }
 
                     enviarDados(cal.getTime(), queue);
@@ -248,6 +263,18 @@ public class EscalaCotroller {
                 }
             }
 
+        }
+    }
+      private static void insertDomingo() {
+        try {
+            ConexaoBD.Conexao.iniciarConexao();
+            PreparedStatement pst = ConexaoBD.Conexao.getC().prepareStatement("insert into escala (data,manha,tarde) values (default,' ',' ')");
+          
+            pst.executeQuery();
+            pst.close();
+            ConexaoBD.Conexao.disconect();
+        } catch (Exception e) {
+            //System.out.println(e.getMessage());
         }
     }
 
@@ -264,7 +291,7 @@ public class EscalaCotroller {
 
         @Override
         public void focusGained(FocusEvent e) {
-            if (Escala.feridaoField.getText().equals("Exemplo: 1,2")) {
+            if (Escala.feridaoField.getText().equals("Ex: 1,2")) {
                 Escala.feridaoField.setText("");
                 Escala.feridaoField.setForeground(Color.GRAY);
             }
@@ -274,57 +301,128 @@ public class EscalaCotroller {
         public void focusLost(FocusEvent e) {
             if (Escala.feridaoField.getText().isEmpty()) {
                 Escala.feridaoField.setForeground(Color.GRAY);
-                Escala.feridaoField.setText("Exemplo: 1,2");
+                Escala.feridaoField.setText("Ex: 1,2");
 
             }
         }
 
     }
 
-    public static int randInt(int min, int max) {
-        return (min + (int) (Math.random() * ((max - min) + 1)));
-    }
-
-    public static String sorteia() {
-        Collections.shuffle(manha);
-
-        int index = randInt(0, manha.size() - 1);
-        return manha.remove(index);
-
-    }
-
+//  
     private static void enviarDados(Date dat, Queue queue) throws SQLException {
+
+        ConexaoFactory();
+        String sql = "insert into escala (idEscala,data,manha,tarde) values (default,?,?,?)";
+        System.out.println("Array: " + queue.toString());
+        String manha = (String) queue.remove();
+        String tarde = (String) queue.remove();
+        queue.add(manha);
+        queue.add(tarde);
+        queue.remove(manha);
+        queue.remove(tarde);
+        daoEscala.inserirEscala(dat, manha, tarde);
+
+        atualizarTableModel();
+
+    }
+
+    public static void deletarEscala() {
+        Object[] options = {"Sim", "Não"};
+
+        int respost = JOptionPane.showOptionDialog(null, "Deseja realmente apagar a Escala?", "Informação", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[1]);
+        if (respost == JOptionPane.NO_OPTION) {
+            // System.out.println("Não");
+        } else {
+            try {
+              ConexaoFactory();
+                daoEscala.deletarEscala();
+
+                atualizarTableModel();
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+
+        }
+
+    }
+
+    public static void atualizarTableModel() {
 
         try {
 
-//            for (Funcionario func : read()) {
-//                manha.add(func.getNome());
-//               
-//
-            String sql = "insert into escala (idEscala,data,manha,tarde) values (default,?,?,?)";
-            System.out.println("Array: " + queue.toString());
+            tableModel.atualizarDados();
 
-            String manha = (String) queue.remove();
-
-            String tarde = (String) queue.remove();
-            queue.add(manha);
-            queue.add(tarde);
-
-            queue.remove();
-            pst = ConexaoBD.Conexao.getC().prepareStatement(sql);
-            pst.setDate(1, new java.sql.Date(dat.getTime()));
-
-            pst.setString(2, manha);
-            pst.setString(3, tarde);
-            pst.execute();
-            pst.close();
-
-            DisplayQueryResults.atualizarTableModel();
-
-        } catch (Exception ex) {
-            System.out.println(ex.getMessage());
-
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
+
+    }
+
+    public static void montarTelaEdicaoEscala() {
+        frame = new JDialog();
+        frame.setLocationRelativeTo(null);
+        //frame.setModal(true);
+        frame.setSize(500, 300);
+        frame.setVisible(true);
+        frame.setResizable(false);
+        frame.setTitle("Alterar Escala");
+        frame.setLayout(new FlowLayout(0, 0, 50));
+
+        JPanel painel = new JPanel();
+        painel.setLayout(new GridLayout(4, 2));
+        JLabel labelManha = new JLabel("Manha: ");
+        labelManha.setHorizontalAlignment(JLabel.RIGHT);
+        JLabel labelTarde = new JLabel("Tarde: ");
+        labelTarde.setHorizontalAlignment(JLabel.RIGHT);
+
+        JLabel vazio = new JLabel();
+        vazio.setHorizontalAlignment(JLabel.RIGHT);
+        DisplayQueryResults.salvar = new JButton("Salvar");
+
+        painel.add(labelManha);
+        painel.add(fieldManha);
+        painel.add(labelTarde);
+        painel.add(fieldTarde);
+        painel.add(vazio);
+        painel.add(DisplayQueryResults.salvar);
+        frame.add(painel);
+
+        Models.Escala esc = new Models.Escala();
+
+        esc.setId((Integer) resultTable.getValueAt(re, 0));
+        esc.setManha((String) resultTable.getValueAt(re, 2));
+        esc.setTarde((String) resultTable.getValueAt(re, 3));
+
+        fieldCodigo = new JTextField();
+
+        fieldCodigo.setText(String.valueOf(esc.getId()));
+        fieldManha.setText(esc.getManha());
+        fieldTarde.setText(esc.getTarde());
+
+        DisplayQueryResults.hanbleButton haButton = new DisplayQueryResults.hanbleButton();
+        salvar.addActionListener(haButton);
+
+    }
+
+    public static void btnSalvar() {
+        ConexaoFactory();
+        Models.Escala es = new Models.Escala();
+        String manha = fieldManha.getText();
+        String tarde = fieldTarde.getText();
+        Integer codigo = Integer.parseInt(fieldCodigo.getText());
+        System.out.println("Teste: " + manha);
+        es.setId(codigo);
+        es.setManha(manha);
+        es.setTarde(tarde);
+
+        daoEscala.alterar(es);
+        EscalaCotroller.atualizarTableModel();
+        daoFuncionario.listar();
+        Cadastro.atualizarComboFuncionarios();
+        fieldManha.setText("");
+        fieldTarde.setText("");
+        JOptionPane.showMessageDialog(null, "Alterado com sucesso", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+        frame.dispose();
 
     }
 

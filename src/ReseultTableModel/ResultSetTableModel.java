@@ -134,7 +134,7 @@ public class ResultSetTableModel extends AbstractTableModel {
     }
 
     public void atualizarDados() throws SQLException{
-      resultset = statement.executeQuery("select * from escala ");
+      resultset = statement.executeQuery("select  * from escala order by data ASC");
         // obtém informações do cabeçado da query
         metaData = resultset.getMetaData();
         resultset.last();

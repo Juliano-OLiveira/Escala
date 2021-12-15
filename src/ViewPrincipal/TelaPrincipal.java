@@ -19,7 +19,7 @@ public class TelaPrincipal extends JFrame {
         setBackground(Color.decode("#ffffff"));
 
         tabbedpane = new JTabbedPane();
-        tabbedpane.setPreferredSize(new Dimension(1080, 500));
+        tabbedpane.setPreferredSize(new Dimension(900, 500));
         add(tabbedpane, BorderLayout.CENTER);
 
         Cadastro cadastro = new Cadastro();

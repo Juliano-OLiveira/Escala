@@ -2,24 +2,31 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package ReseultTableModel;
+package Views;
 
+import Controller.EscalaCotroller;
+import Factory.EscalaDaoFactory;
+import Factory.FuncionarioDaoFactory;
+import IDao.escalaDao.EscalaDaoImpl;
+import IDao.funcionarioDao.IFuncionarioDao;
+import Models.Escala;
+import ReseultTableModel.ResultSetTableModel;
 import static com.sun.java.accessibility.util.AWTEventMonitor.addWindowListener;
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.PatternSyntaxException;
 import javax.swing.Box;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JInternalFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -48,21 +55,31 @@ public class DisplayQueryResults extends JInternalFrame {
     public static ResultSetTableModel tableModel;
     private static TableRowSorter<TableModel> sorter;
     public static JTable resultTable;
-    public static final String DEFAULT_QUERY = "SELECT * from escala";
+    public static final String DEFAULT_QUERY = "SELECT * from escala order by data ASC";
     public static JScrollPane scrollPane;
     private static JButton filterButton;
     private static JPanel teste;
     private static JButton deletar, relatorio;
     private String saida;
+    private InputStream src;
+   
+    public static JButton salvar;
+
+   
+
+    public static hanbleButton haButton = new hanbleButton();
 
     public DisplayQueryResults() {
         // super("Visualização de resultados de consulta de banco de dados");
+       
+
         iniciarComponentes();
 
     }
 
     private void iniciarComponentes() {
         try {
+
             addWindowListener(new WindowHandler());
 
             tableModel = new ResultSetTableModel(DEFAULT_QUERY);
@@ -99,6 +116,8 @@ public class DisplayQueryResults extends JInternalFrame {
             filterButton.addActionListener(new FilterQueryHandler());
             sorter = new TableRowSorter<>(tableModel);
             resultTable.setRowSorter(sorter);
+            altTable atTable = new altTable();
+            resultTable.addMouseListener(atTable);
 
             /**
              * Painel utilizado para permitir a aplicação de filtros na tabela
@@ -140,39 +159,26 @@ public class DisplayQueryResults extends JInternalFrame {
             }
 
             if (arg0.getSource() == deletar) {
-                deletarEscala();
+                EscalaCotroller.deletarEscala();
             } else if (arg0.getSource() == relatorio) {
-                try {
-                    GerarRelatorio();
-                } catch (FileNotFoundException ex) {
-                    Logger.getLogger(DisplayQueryResults.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (URISyntaxException ex) {
-                    Logger.getLogger(DisplayQueryResults.class.getName()).log(Level.SEVERE, null, ex);
-                }
+                GerarRelatorio();
 
             }
 
         }
 
-        private void deletarEscala() {
-            Object[] options = {"Sim", "Não"};
+        public void GerarRelatorio() {
+            try {
 
-            int respost = JOptionPane.showOptionDialog(null, "Deseja realmente apagar a Escala?", "Informação", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[1]);
-            if (respost == JOptionPane.NO_OPTION) {
-                // System.out.println("Não");
-            } else {
-                try {
-                    ConexaoBD.Conexao.iniciarConexao();
-                    PreparedStatement pst = ConexaoBD.Conexao.getC().prepareStatement("delete from escala");
-                    pst.executeUpdate();
+                src = this.getClass().getClassLoader().getResourceAsStream("relatorios/Escala.jasper");
+                JasperPrint jasperPrint = JasperFillManager.fillReport(src, null, ConexaoBD.Conexao.getC());
 
-                    pst.close();
-                    ConexaoBD.Conexao.disconect();
-                    DisplayQueryResults.atualizarTableModel();
-                } catch (Exception e) {
-                    System.out.println(e.getMessage());
-                }
+                JasperViewer view = new JasperViewer(jasperPrint, false);
+                view.setTitle("Escala");
+                view.setVisible(true);
 
+            } catch (JRException e) {
+                System.out.println(e.getMessage());
             }
 
         }
@@ -183,18 +189,51 @@ public class DisplayQueryResults extends JInternalFrame {
 
         @Override
         public void actionPerformed(ActionEvent arg0) {
-            String text = filterText.getText();
+            String text = filterText.getText().toLowerCase();
+
             if (text.isEmpty()) {
                 sorter.setRowFilter(null);
             } else {
                 try {
-                    sorter.setRowFilter(RowFilter.regexFilter(text));
+                    sorter.setRowFilter(RowFilter.regexFilter("(?i)^"+text));
                 } catch (PatternSyntaxException ex) {
                     JOptionPane.showMessageDialog(null,
                             "Bad regex pattern", "Bad regex pattern",
                             JOptionPane.ERROR_MESSAGE);
                 }
             }
+        }
+
+    }
+
+    private class altTable implements MouseListener {
+
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            EscalaCotroller.re = resultTable.getSelectedRow();
+            if (EscalaCotroller.re != -1) {
+                EscalaCotroller.montarTelaEdicaoEscala();
+            }
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+            return;
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            return;
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+            return;
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+            return;
         }
 
     }
@@ -210,64 +249,14 @@ public class DisplayQueryResults extends JInternalFrame {
 
     }
 
-    public static void atualizarTableModel() {
+    public static class hanbleButton implements ActionListener {
 
-        try {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (e.getSource() == salvar) {
+                EscalaCotroller.btnSalvar();
 
-            tableModel.atualizarDados();
-
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-
-    }
-
-    public void GerarRelatorio() throws FileNotFoundException, URISyntaxException {
-        try {
-
-          
-
-            InputStream src = this.getClass().getClassLoader().getResourceAsStream("relatorios/Escala.jasper");
-            JasperPrint jasperPrint = JasperFillManager.fillReport(src, null, ConexaoBD.Conexao.getC());
-
-            JasperViewer view = new JasperViewer(jasperPrint, false);
-            view.setTitle("Escala");
-            view.setVisible(true);
-
-   //         JasperViewer.viewReport(jasperPrint, false);
-//            //     abrir o relatório
-//            File file = new File("/home/oli/NetBeansProjects/Escala/rel/Escala.pdf");
-//            try {
-//                java.awt.Desktop.getDesktop().open(file);
-//            } catch (IOException e) {
-//                JOptionPane.showConfirmDialog(null, e);
-//            }
-//            file.deleteOnExit();
-//            String impressora = "";
-//            PrintService[] services = PrintServiceLookup.lookupPrintServices(null, null);
-//            PrintService psSelected = null;
-//            for (PrintService ps : services) {
-//                if (ps.getName().equals(impressora)) {
-//                    psSelected = ps;
-//                    break;
-//                }
-//            }
-//            if (psSelected != null) {
-//                PrintRequestAttributeSet printRequestAttributeSet = new HashPrintRequestAttributeSet();
-//                PrintServiceAttributeSet printServiceAttributeSet = new HashPrintServiceAttributeSet();
-//                printServiceAttributeSet.add(new PrinterName(impressora, null));
-//                printRequestAttributeSet.add(new Copies(1));
-//                JRPrintServiceExporter exporter = new JRPrintServiceExporter();
-//                exporter.setParameter(JRPrintServiceExporterParameter.PRINT_SERVICE, psSelected);
-//                exporter.setParameter(JRExporterParameter.JASPER_PRINT, jasperPrint);
-//                exporter.setParameter(JRPrintServiceExporterParameter.PRINT_REQUEST_ATTRIBUTE_SET, printRequestAttributeSet);
-//                exporter.setParameter(JRPrintServiceExporterParameter.DISPLAY_PAGE_DIALOG, Boolean.TRUE);
-//                exporter.setParameter(JRPrintServiceExporterParameter.DISPLAY_PRINT_DIALOG, Boolean.TRUE);
-//                exporter.exportReport();
-//
-//            }
-        } catch (JRException e) {
-            System.out.println(e.getMessage());
+            }
         }
 
     }

@@ -3,7 +3,7 @@ package Views;
 import Controller.EscalaCotroller;
 import DateFormat.TextDataChooser;
 import Factory.EscalaDaoFactory;
-import IDao.escalaDao.IEscalaDaoImpl;
+import IDao.escalaDao.EscalaDaoImpl;
 import Models.Funcionario;
 import static Views.Cadastro.atualizarComboFuncionarios;
 import java.awt.BorderLayout;
@@ -37,7 +37,7 @@ public class Escala extends JPanel {
     private JButton adiconar, remover;
     private Funcionario func;
     private static JPanel esquerdo;
-    private static IEscalaDaoImpl dao;
+    private static EscalaDaoImpl dao;
     private static EscalaDaoFactory factory;
 
     public Escala() {
@@ -85,7 +85,7 @@ public class Escala extends JPanel {
 
         labelFeriado = new JLabel("Feriado: ");
         feridaoField = new JTextField(15);
-        feridaoField.setText("Exemplo: 1,2");
+        feridaoField.setText("Ex: 1,2");
         feridaoField.setForeground(Color.GRAY);
         feridaoField.setEditable(false);
         feridaoField.setHorizontalAlignment(JLabel.RIGHT);
@@ -156,6 +156,7 @@ public class Escala extends JPanel {
                 } else {
 
                     feridaoField.setEditable(false);
+                     feridaoField.setText("Ex: 1,2");
 
                 }
 

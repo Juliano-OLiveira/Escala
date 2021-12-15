@@ -1,6 +1,5 @@
 package Controller;
 
-import ConexaoBD.Conexao;
 import Factory.FuncionarioDaoFactory;
 import IDao.funcionarioDao.IFuncionarioDao;
 import Models.Funcionario;
@@ -65,7 +64,7 @@ public class ContollerFuncionarios {
                 dao.excluir(funci);
                 JOptionPane.showMessageDialog(null, Cadastro.funcionario.getNome() + " excluido com Susseso");
 
-                Conexao.disconect();
+               // Conexao.disconect();
             } else {
                 JOptionPane.showMessageDialog(null, "Selecione um item na Lista para Excluir", "Aviso", JOptionPane.WARNING_MESSAGE);
 
