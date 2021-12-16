@@ -13,10 +13,12 @@ import Models.Escala;
 import ReseultTableModel.ResultSetTableModel;
 import static com.sun.java.accessibility.util.AWTEventMonitor.addWindowListener;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
@@ -43,6 +45,7 @@ import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.view.JasperViewer;
+import sun.awt.AWTAccessor;
 
 /**
  *
@@ -62,16 +65,13 @@ public class DisplayQueryResults extends JInternalFrame {
     private static JButton deletar, relatorio;
     private String saida;
     private InputStream src;
-   
-    public static JButton salvar;
 
-   
+    public static JButton salvar;
 
     public static hanbleButton haButton = new hanbleButton();
 
     public DisplayQueryResults() {
         // super("Visualização de resultados de consulta de banco de dados");
-       
 
         iniciarComponentes();
 
@@ -112,8 +112,10 @@ public class DisplayQueryResults extends JInternalFrame {
             JScrollPane scrollTable = new JScrollPane(resultTable);
 
             filterText = new JTextField();
+            filterText.addActionListener(new FilterQueryHandler());
             JButton filterButton = new JButton("Aplicar filtro");
             filterButton.addActionListener(new FilterQueryHandler());
+            
             sorter = new TableRowSorter<>(tableModel);
             resultTable.setRowSorter(sorter);
             altTable atTable = new altTable();
@@ -189,13 +191,14 @@ public class DisplayQueryResults extends JInternalFrame {
 
         @Override
         public void actionPerformed(ActionEvent arg0) {
-            String text = filterText.getText().toLowerCase();
+            String text = filterText.getText();
 
             if (text.isEmpty()) {
                 sorter.setRowFilter(null);
             } else {
                 try {
-                    sorter.setRowFilter(RowFilter.regexFilter("(?i)^"+text));
+                    sorter.setRowFilter(RowFilter.regexFilter("(?i)^" + text));
+                    
                 } catch (PatternSyntaxException ex) {
                     JOptionPane.showMessageDialog(null,
                             "Bad regex pattern", "Bad regex pattern",
@@ -261,4 +264,7 @@ public class DisplayQueryResults extends JInternalFrame {
 
     }
 
+   
+    
+    
 }

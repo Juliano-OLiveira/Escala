@@ -31,6 +31,9 @@ import javax.swing.KeyStroke;
 import com.towel.awt.ann.Action;
 import com.towel.awt.ann.ActionManager;
 import com.towel.time.DateUtils;
+import java.awt.Image;
+import java.io.InputStream;
+import javax.imageio.ImageIO;
 
 @SuppressWarnings("serial")
 public class TextDataChooser extends JFormattedTextField {
@@ -52,7 +55,7 @@ public class TextDataChooser extends JFormattedTextField {
 		glassPane.setModal(true);
 		glassPane.setTitle("Data");
         btnFolder = new JButton();
-        btnFolder.setIcon(new ImageIcon(getClass().getResource("/icones/calendario.png")));
+       loadIcon();
         btnFolder.setPreferredSize(new Dimension(15,10));
         btnFolder.setBackground(null);
         btnFolder.setOpaque(false);
@@ -78,7 +81,7 @@ public class TextDataChooser extends JFormattedTextField {
 		glassPane.setModal(true);
 		glassPane.setTitle("Data");
         btnFolder = new JButton();
-        btnFolder.setIcon(new ImageIcon(getClass().getResource("/icones/calendar.png")));
+        loadIcon();
         btnFolder.setBackground(null);
         btnFolder.setOpaque(false);
         btnFolder.setBackground(new Color(204, 204, 255));
@@ -99,6 +102,20 @@ public class TextDataChooser extends JFormattedTextField {
 //    	btnFolder.setEnabled(b);
 //    	this.setEnabled(b);
 //    }
+    
+        private void loadIcon() {
+        InputStream icon = getClass().getResourceAsStream("/icones/calendario.png");
+
+        try {
+
+            Image image = ImageIO.read(icon);
+
+            this.btnFolder.setIcon(new ImageIcon(image));
+        } catch (Exception e) {
+            System.out.println("Error: " + e);
+        }
+
+    }
     
     public Calendar getSelectedDate(){
 		Calendar cal = Calendar.getInstance();

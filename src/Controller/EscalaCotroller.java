@@ -56,10 +56,11 @@ public class EscalaCotroller {
     private static JDialog frame;
     private static JTextField fieldManha = new JTextField(15);
     private static JTextField fieldTarde = new JTextField(15);
+    private static JTextField fieldData = new JTextField(15);
     private static JTextField fieldCodigo;
     public static Queue queue = new LinkedList();
     public static int re;
-    
+
     private static FuncionarioDaoFactory factoryFunc;
     private static EscalaDaoFactory factory2;
     private static IFuncionarioDao daoFuncionario;
@@ -67,20 +68,18 @@ public class EscalaCotroller {
     public static void ConexaoFactory() {
         factoryFunc = new Factory.FuncionarioDaoFactory();
         daoFuncionario = (IFuncionarioDao) factoryFunc.createObject();
-        
+
         factory2 = new Factory.EscalaDaoFactory();
         daoEscala = (EscalaDaoImpl) factory2.createObject();
-        
+
         factory = new Factory.EscalaDaoFactory();
         daoEscala = (EscalaDaoImpl) factory.createObject();
-           
+
     }
 
     public static Escala getFunc() {
         return Escala.escala;
     }
-
-  
 
     public static void insertSabado() throws ParseException {
 
@@ -234,17 +233,15 @@ public class EscalaCotroller {
 
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 
-            if (cal.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY  ) {
+            if (cal.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
                 // System.out.println("Domingo");
                 insertDomingo();
 
-            } 
-            else if (cal.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY) {
+            } else if (cal.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY) {
                 // System.out.println("Sabado");
                 insertSabado();
 
-            } 
-            else if (cal.get(Calendar.DATE) == t0 || feriados.contains(cal.get(Calendar.DATE))) {
+            } else if (cal.get(Calendar.DATE) == t0 || feriados.contains(cal.get(Calendar.DATE))) {
 
                 System.out.println("Feriados: " + t0);
 
@@ -265,11 +262,12 @@ public class EscalaCotroller {
 
         }
     }
-      private static void insertDomingo() {
+
+    private static void insertDomingo() {
         try {
             ConexaoBD.Conexao.iniciarConexao();
             PreparedStatement pst = ConexaoBD.Conexao.getC().prepareStatement("insert into escala (data,manha,tarde) values (default,' ',' ')");
-          
+
             pst.executeQuery();
             pst.close();
             ConexaoBD.Conexao.disconect();
@@ -334,7 +332,7 @@ public class EscalaCotroller {
             // System.out.println("Não");
         } else {
             try {
-              ConexaoFactory();
+                ConexaoFactory();
                 daoEscala.deletarEscala();
 
                 atualizarTableModel();
@@ -359,26 +357,33 @@ public class EscalaCotroller {
     }
 
     public static void montarTelaEdicaoEscala() {
+
         frame = new JDialog();
-        frame.setLocationRelativeTo(null);
-        //frame.setModal(true);
         frame.setSize(500, 300);
-        frame.setVisible(true);
+
+        frame.setModal(true);
+
+        frame.setLocationRelativeTo(null);
         frame.setResizable(false);
         frame.setTitle("Alterar Escala");
         frame.setLayout(new FlowLayout(0, 0, 50));
 
         JPanel painel = new JPanel();
         painel.setLayout(new GridLayout(4, 2));
+        JLabel labelData = new JLabel("Data: ");
+        labelData.setHorizontalAlignment(JLabel.RIGHT);
         JLabel labelManha = new JLabel("Manha: ");
         labelManha.setHorizontalAlignment(JLabel.RIGHT);
         JLabel labelTarde = new JLabel("Tarde: ");
         labelTarde.setHorizontalAlignment(JLabel.RIGHT);
+        fieldData.setEditable(false);
 
         JLabel vazio = new JLabel();
         vazio.setHorizontalAlignment(JLabel.RIGHT);
         DisplayQueryResults.salvar = new JButton("Salvar");
 
+        painel.add(labelData);
+        painel.add(fieldData);
         painel.add(labelManha);
         painel.add(fieldManha);
         painel.add(labelTarde);
@@ -388,19 +393,24 @@ public class EscalaCotroller {
         frame.add(painel);
 
         Models.Escala esc = new Models.Escala();
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 
         esc.setId((Integer) resultTable.getValueAt(re, 0));
+        esc.setData((Date) resultTable.getValueAt(re, 1));
         esc.setManha((String) resultTable.getValueAt(re, 2));
         esc.setTarde((String) resultTable.getValueAt(re, 3));
 
         fieldCodigo = new JTextField();
-
+        fieldData.setText(sdf.format(esc.getData()));
         fieldCodigo.setText(String.valueOf(esc.getId()));
         fieldManha.setText(esc.getManha());
+        fieldData.setForeground(Color.GRAY);
+
         fieldTarde.setText(esc.getTarde());
 
         DisplayQueryResults.hanbleButton haButton = new DisplayQueryResults.hanbleButton();
         salvar.addActionListener(haButton);
+        frame.setVisible(true);
 
     }
 
@@ -422,6 +432,7 @@ public class EscalaCotroller {
         fieldManha.setText("");
         fieldTarde.setText("");
         JOptionPane.showMessageDialog(null, "Alterado com sucesso", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+
         frame.dispose();
 
     }
